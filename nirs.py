@@ -92,10 +92,22 @@ agent = QAgent()
 # В классе Game:
 class Game:
     def __init__(self):
-        pass
+        self.blocks = []
+        self.timer = 0
+        self.interval = 50
+        self.placed_blocks = 0
+        self.finished = False
+        self.prev_state = (0, 0)
+        self.prev_action = 0
 
     def reset(self):
-        pass
+        for b in self.blocks:
+            space.remove(b, *b.shapes)
+        self.blocks.clear()
+        self.timer = 0
+        self.placed_blocks = 0
+        self.finished = False
+
     def drop_block(self):
         pass
     def update(self):
