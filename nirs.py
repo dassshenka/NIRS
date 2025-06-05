@@ -86,10 +86,11 @@ class QAgent:
     def decay_epsilon(self, factor=0.999, min_eps=0.05):
         self.epsilon = max(min_eps, self.epsilon * factor)
 
+
 agent = QAgent()
 
+
 # Игровой процесс
-# В классе Game:
 class Game:
     def __init__(self):
         self.blocks = []
@@ -109,13 +110,45 @@ class Game:
         self.finished = False
 
     def drop_block(self):
-        pass
+        self.prev_state = agent.get_state(self.blocks)
+        action_idx = agent.choose_action(self.prev_state)
+        x = agent.actions[action_idx]
+        y = START_Y
+        self.prev_action = action_idx
+
+        block = create_block(x, y)
+        self.blocks.append(block)
+        self.placed_blocks += 1
+
     def update(self):
-        pass
+        if self.finished:
+            return
+
+        self.timer += 1
+        if self.timer >= self.interval:
+            self.timer = 0
+            if self.placed_blocks < MAX_BLOCKS:
+                self.drop_block()
+            else:
+                self.finished = True
+
+        for b in self.blocks:
+            if self.is_invalid(b):
+                self.finished = True
+                break
+
     def is_invalid(self, block):
-        pass
+        xs = [b.position.x for b in self.blocks]
+        min_x, max_x = min(xs), max(xs)
+        x = block.position.x
+        y = block.position.y
+        if abs(max_x - x) >= 3 * BLOCK_SIZE or abs(min_x - x) >= 3 * BLOCK_SIZE:
+            return True
+        return y > HEIGHT
+
     def get_reward(self):
         pass
+
 
 game = Game()
 generation = 0
