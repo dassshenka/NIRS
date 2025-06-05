@@ -147,7 +147,29 @@ class Game:
         return y > HEIGHT
 
     def get_reward(self):
-        pass
+        if not self.blocks:
+            return -20
+
+        last = self.blocks[-1]
+        if self.is_invalid(last):
+            return -20
+
+        ys = [b.position.y for b in self.blocks]
+        tower_height = HEIGHT - min(ys)
+
+        xs = [b.position.x for b in self.blocks]
+        cx = sum(xs) / len(xs)
+        cy = sum(ys) / len(ys)
+        left_x = min(xs)
+        right_x = max(xs)
+
+        if right_x == left_x:
+            return 10 + tower_height
+
+        pyramid_score = ((HEIGHT - cy) / (tower_height / 3)) * 10
+        pyramid_score += ((cx - left_x) / ((right_x - left_x) / 2)) * 10
+
+        return 10 + tower_height + pyramid_score
 
 
 game = Game()
