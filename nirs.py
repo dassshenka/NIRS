@@ -46,10 +46,24 @@ def create_block(x, y):
 # Q-learning агент
 class QAgent:
     def __init__(self):
-        pass
+        self.actions = [i for i in range(200, 700, BLOCK_SIZE)]  # дискретные X
+        self.q_table = {}
+        self.epsilon = 1.0
+        self.alpha = 0.1        # скорость обучения
+        self.gamma = 0.95       # важность будущих наград
 
     def get_state(self, blocks):
-        pass
+        if not blocks:
+            return START_X, START_Y
+
+        xs = [b.position.x for b in blocks]
+        ys = [b.position.y for b in blocks]
+        total_mass = len(blocks)
+
+        cx = int(sum(xs) / total_mass)
+        cy = int(sum(ys) / total_mass)
+
+        return cx, cy
 
     def choose_action(self, state):
             pass
