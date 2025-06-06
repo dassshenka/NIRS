@@ -3,13 +3,15 @@ import pymunk.pygame_util
 import pymunk
 import numpy as np
 from random import randint
+import pickle
+import os
 
 # Настройки
 RES = WIDTH, HEIGHT = 900, 720
 FPS = 150
 BLOCK_SIZE = 60
 START_X = WIDTH // 2
-START_Y = 350
+START_Y = 30
 MAX_BLOCKS = 50
 
 pg.init()
@@ -46,7 +48,7 @@ def create_block(x, y):
 # Q-learning агент
 class QAgent:
     def __init__(self):
-        self.actions = [i for i in range(200, 700, BLOCK_SIZE)]  # дискретные X
+        self.actions = [i for i in range(0, 900, BLOCK_SIZE)]  # дискретные X
         self.q_table = {}
         self.epsilon = 1.0
         self.alpha = 0.1        # скорость обучения
@@ -83,19 +85,27 @@ class QAgent:
         target = reward + self.gamma * np.max(self.q_table[next_state])  # оцениваем правду (награда сейчаас + лучшая ожидаемая награда из нового состояния)
         self.q_table[prev_state][action] += self.alpha * (target - predict)
 
-    def decay_epsilon(self, factor=0.999, min_eps=0.05):
+    def decay_epsilon(self, factor=0.9995, min_eps=0.05):
         self.epsilon = max(min_eps, self.epsilon * factor)
 
+    def save(self, filename='q_table.pkl'):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.q_table, f)
+
+    def load(self, filename='q_table.pkl'):
+        if os.path.exists(filename):
+            with open(filename, 'rb') as f:
+                self.q_table = pickle.load(f)
 
 agent = QAgent()
-
+agent.load()
 
 # Игровой процесс
 class Game:
     def __init__(self):
         self.blocks = []
         self.timer = 0
-        self.interval = 50
+        self.interval = 60
         self.placed_blocks = 0
         self.finished = False
         self.prev_state = (0, 0)
@@ -117,6 +127,9 @@ class Game:
         self.prev_action = action_idx
 
         block = create_block(x, y)
+        if self.is_invalid(block):
+            self.finished = True
+
         self.blocks.append(block)
         self.placed_blocks += 1
 
@@ -132,27 +145,29 @@ class Game:
             else:
                 self.finished = True
 
-        for b in self.blocks:
-            if self.is_invalid(b):
-                self.finished = True
-                break
+        #for b in self.blocks:
+        #    if self.is_invalid(b):
+        #        self.finished = True
+        #        break
 
     def is_invalid(self, block):
+        if not self.blocks:
+            return False
         xs = [b.position.x for b in self.blocks]
         min_x, max_x = min(xs), max(xs)
         x = block.position.x
         y = block.position.y
-        if abs(max_x - x) >= 3 * BLOCK_SIZE or abs(min_x - x) >= 3 * BLOCK_SIZE:
+        if x - max_x >= 3 * BLOCK_SIZE or min_x - x >= 3 * BLOCK_SIZE:
             return True
         return y > HEIGHT
 
     def get_reward(self):
         if not self.blocks:
-            return -20
+            return -10
 
         last = self.blocks[-1]
         if self.is_invalid(last):
-            return -20
+            return -10
 
         ys = [b.position.y for b in self.blocks]
         tower_height = HEIGHT - min(ys)
@@ -164,12 +179,12 @@ class Game:
         right_x = max(xs)
 
         if right_x == left_x:
-            return 10 + tower_height
+            return 1 + tower_height
 
-        pyramid_score = ((HEIGHT - cy) / (tower_height / 3)) * 10
-        pyramid_score += ((cx - left_x) / ((right_x - left_x) / 2)) * 10
+        pyramid_score = ((HEIGHT - cy) / (tower_height / 3)) * 15
+        pyramid_score += ((cx - left_x) / ((right_x - left_x) / 2)) * 15
 
-        return 10 + tower_height + pyramid_score
+        return 1 + tower_height/100 + pyramid_score
 
 
 game = Game()
@@ -181,6 +196,7 @@ while True:
     surface.fill(pg.Color('white'))
     for event in pg.event.get():
         if event.type == pg.QUIT:
+            agent.save()
             pg.quit()
             exit()
 
