@@ -1,6 +1,6 @@
 import pygame as pg
 import matplotlib.pyplot as plt
-from config import surface, font, clock, FPS
+from config import surface, font, clock, FPS, SHOW_EVERY
 from physics import space, draw_options
 from game import agent, Game
 
@@ -11,7 +11,10 @@ best_score = 0
 episode_rewards = []
 
 while True:
-    surface.fill(pg.Color('white'))
+    if generation % SHOW_EVERY == 0:
+        surface.fill(pg.Color('white'))
+    else:
+        surface.fill(pg.Color('black'))
     for event in pg.event.get():
         if event.type == pg.QUIT:
             agent.save()
@@ -26,15 +29,16 @@ while True:
 
     game.update()
     space.step(1 / FPS)
-    space.debug_draw(draw_options(surface))
+    if generation % SHOW_EVERY == 0:
+        space.debug_draw(draw_options(surface))
 
-    surface.blit(font.render(f"Gen: {generation}", True, (255, 0, 255)), (10, 10))
-    surface.blit(font.render(f"Blocks: {game.placed_blocks}", True, (255, 0, 255)), (10, 40))
-    surface.blit(font.render(f"Best: {best_score}", True, (255, 0, 255)), (10, 70))
-    surface.blit(font.render(f"Epsilon: {agent.epsilon:.2f}", True, (255, 0, 255)), (10, 100))
+        surface.blit(font.render(f"Gen: {generation}", True, (255, 0, 255)), (10, 10))
+        surface.blit(font.render(f"Blocks: {game.placed_blocks}", True, (255, 0, 255)), (10, 40))
+        surface.blit(font.render(f"Best: {best_score}", True, (255, 0, 255)), (10, 70))
+        surface.blit(font.render(f"Epsilon: {agent.epsilon:.2f}", True, (255, 0, 255)), (10, 100))
 
-    pg.display.flip()
-    clock.tick(4000)
+        pg.display.flip()
+    clock.tick(200)
 
     if game.finished:
         r = game.get_reward()
@@ -44,6 +48,7 @@ while True:
         agent.learn(game.prev_state, game.prev_action, r, next_state)
         best_score = max(best_score, game.placed_blocks)
         generation += 1
+
         agent.decay_epsilon()
-        pg.time.delay(300)
+        #pg.time.delay(300)
         game.reset()

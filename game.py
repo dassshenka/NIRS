@@ -1,6 +1,6 @@
 from utils import create_block
 from physics import space
-from config import HEIGHT, BLOCK_SIZE, START_Y, MAX_BLOCKS, COLS, FPS
+from config import HEIGHT, BLOCK_SIZE, START_Y, MAX_BLOCKS, FPS
 from agent import QAgent
 
 agent = QAgent()
@@ -85,30 +85,30 @@ class Game:
         cx = sum(xs) / len(xs)
         left_x = min(xs)
         right_x = max(xs)
-        width = right_x - left_x
-        height = (HEIGHT - min(ys)) // 100
-        reward = 0 #height // 100
+        height = (HEIGHT - min(ys)) // 10
+        reward = height // 5
         if right_x == left_x:
             pyramid_score = 0
         else:
-            pyramid_score = ((cx - left_x) / ((right_x - left_x) / 2)) // 1
-        #print(height // 100, pyramid_score * 25)
-        reward += pyramid_score * 5
-        h = agent.get_state(self.blocks)
-        max_ind, max_val = max(enumerate(h), key=lambda x: x[1])
-        i = max_ind
-        while i > 0:
-            if h[i-1] <= h[i]:
-                reward += h[i]
-            else:
-                reward -= h[i]
-            i -= 1
-        i = max_ind
-        while i > len(h):
-            if h[i+1] <= h[i]:
-                reward += h[i]
-            else:
-                reward -= h[i]
-            i += 1
-        print(reward)
+            pyramid_score = ((cx - left_x) / ((right_x - left_x) / 2))
+        #print(height // 5, pyramid_score * 25)
+        reward += pyramid_score * len(self.blocks)
+        #h = agent.get_state(self.blocks)
+        #max_ind, max_val = max(enumerate(h), key=lambda x: x[1])
+        #i = max_ind
+        #while i > 0:
+        #    if h[i-1] <= h[i]:
+        #        reward += h[i]
+        #    else:
+        #        reward -= h[i]
+        #    i -= 1
+        #i = max_ind
+        #while i > len(h):
+        #    if h[i+1] <= h[i]:
+        #        reward += h[i]
+        #    else:
+        #        reward -= h[i]
+        #    i += 1
+
+        #print(reward)
         return reward

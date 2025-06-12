@@ -10,8 +10,8 @@ class QAgent:
         #TODO увеличим actions
         self.actions = [i for i in range(BLOCK_SIZE // 2, 900, BLOCK_SIZE)]  # дискретные X
         self.q_table = {}
-        self.epsilon = 1.0
-        self.alpha = 0.1        # скорость обучения
+        self.epsilon = 0.0
+        self.alpha = 0.2        # скорость обучения
         self.gamma = 0.95       # важность будущих наград
 
     def get_state(self, blocks):
@@ -39,6 +39,7 @@ class QAgent:
 
     def ensure_state_exists(self, state):
         if state not in self.q_table:
+            #print('Неизвестное состояние')
             self.q_table[state] = np.zeros(len(self.actions))
 
 
@@ -51,7 +52,7 @@ class QAgent:
         self.q_table[prev_state][action] += self.alpha * (target - predict)
 
     # TODO увеличим factor
-    def decay_epsilon(self, factor=0.999, min_eps=0.1):
+    def decay_epsilon(self, factor=0.9999, min_eps=0.1):
         self.epsilon = max(min_eps, self.epsilon * factor)
 
     def save(self, filename='q_table.pkl'):

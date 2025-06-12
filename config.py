@@ -4,11 +4,12 @@ import pygame as pg
 RES = WIDTH, HEIGHT = 900, 900
 FPS = 150
 #TODO уменьшим block size
-BLOCK_SIZE = 125
+BLOCK_SIZE = 175
 START_X = WIDTH // 2
 START_Y = 30
 #TODO увеличим max blocks
-MAX_BLOCKS = 15
+MAX_BLOCKS = 20
+SHOW_EVERY = 1
 COLS = WIDTH // BLOCK_SIZE
 
 # Pygame
