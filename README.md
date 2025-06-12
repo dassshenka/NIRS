@@ -1,5 +1,5 @@
 # 1. Clone repository
-git clone 
+git clone https://github.com/dassshenka/NIRS.git
 cd NIRS
 
 # 2. Run demo
