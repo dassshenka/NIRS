@@ -25,7 +25,7 @@ class QAgent:
         self.actions = [i for i in range(BLOCK_SIZE // 2, 900, BLOCK_SIZE)]  # дискретные X
         self.q_table = {}
         self.epsilon = 1.0
-        self.alpha = 0.2        # скорость обучения
+        self.alpha = 0.1        # скорость обучения
         self.gamma = 0.95       # важность будущих наград
 
     def get_state(self, blocks):
