@@ -1,20 +1,26 @@
+# Раздел: Настройки и инициализация Pygame
+# Назначение: Определение параметров экрана, блоков и инициализация библиотеки Pygame
+
 import pygame as pg
 
-# Настройки
-RES = WIDTH, HEIGHT = 900, 900
-FPS = 150
-#TODO уменьшим block size
-BLOCK_SIZE = 175
-START_X = WIDTH // 2
-START_Y = 30
-#TODO увеличим max blocks
-MAX_BLOCKS = 20
-SHOW_EVERY = 1
-COLS = WIDTH // BLOCK_SIZE
+# --- Настройки экрана и игры ---
+RES = WIDTH, HEIGHT = 900, 900      # Разрешение окна (ширина, высота) в пикселях
+FPS = 150                          # Частота обновления кадров в секунду
 
-# Pygame
-pg.init()
-surface = pg.display.set_mode(RES)
-pg.display.set_caption("Q-обучение пирамида")
-clock = pg.time.Clock()
-font = pg.font.Font(None, 28)
+# --- Параметры блоков ---
+BLOCK_SIZE = 125                   # Размер одного блока (TODO: уменьшить размер блока)
+START_X = WIDTH // 2               # Начальная позиция X (центр экрана)
+START_Y = 30                      # Начальная позиция Y (отступ сверху)
+MAX_BLOCKS = 20                   # Максимальное количество блоков (TODO: увеличить)
+SHOW_EVERY = 50                   # Частота обновления отображения (каждые N кадров)
+COLS = WIDTH // BLOCK_SIZE         # Количество колонок по ширине экрана
+
+# --- Инициализация Pygame ---
+pg.init()                         # Инициализация всех модулей Pygame
+
+surface = pg.display.set_mode(RES)  # Создание окна с заданным разрешением
+pg.display.set_caption("Q-обучение пирамида")  # Заголовок окна
+
+clock = pg.time.Clock()            # Объект для контроля времени и FPS
+
+font = pg.font.Font(None, 28)     # Шрифт для вывода текста (стандартный, размер 28)

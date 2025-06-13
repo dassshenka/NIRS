@@ -1,23 +1,48 @@
+# Раздел: Класс Game для управления игровым процессом
+# Назначение: Реализация логики игры с использованием Q-агента для управления блоками
+# Входные данные:
+#   Используются константы из config (HEIGHT, BLOCK_SIZE, START_Y, MAX_BLOCKS, FPS)
+#   Агент QAgent загружается из внешнего модуля agent
+# Выходные данные:
+#   Методы класса обеспечивают управление блоками, обновление состояния игры, обучение агента и вычисление награды
+
 from utils import create_block
 from physics import space
 from config import HEIGHT, BLOCK_SIZE, START_Y, MAX_BLOCKS, FPS
 from agent import QAgent
 
+# Инициализация агента Q-обучения и загрузка Q-таблицы
 agent = QAgent()
 agent.load()
 
 class Game:
     def __init__(self):
+        """
+        Инициализация игрового состояния:
+            - blocks: список текущих блоков в игре
+            - timer: счётчик кадров для интервала появления блоков
+            - interval: интервал между падениями блоков (в кадрах)
+            - placed_blocks: количество размещённых блоков
+            - finished: флаг окончания игры
+            - prev_state: предыдущее состояние агента (TODO: увеличить размерность состояния)
+            - prev_action: предыдущее действие агента
+        """
         self.blocks = []
         self.timer = 0
         self.interval = 60
         self.placed_blocks = 0
         self.finished = False
-        # TODO увеличим state
         self.prev_state = agent.get_state(self.blocks)
         self.prev_action = None
 
     def reset(self):
+        """
+        Сброс игрового состояния:
+            - удаление всех блоков из физического пространства
+            - очистка списка блоков
+            - сброс таймера и счётчика размещённых блоков
+            - сброс флага окончания игры
+        """
         for b in self.blocks:
             space.remove(b, *b.shapes)
         self.blocks.clear()
@@ -26,6 +51,16 @@ class Game:
         self.finished = False
 
     def drop_block(self):
+        """
+        Метод создания и падения нового блока:
+            - получение текущего состояния агента
+            - выбор действия (позиции по X) агентом
+            - создание блока в выбранной позиции
+            - симуляция падения блока (прогон физики на fall_frames кадров)
+            - проверка валидности положения блока
+            - обновление списка блоков и счётчика размещённых
+            - обучение агента на основе полученной награды
+        """
         self.prev_state = agent.get_state(self.blocks)
         action_idx = agent.choose_action(self.prev_state)
         x = agent.actions[action_idx]
@@ -48,6 +83,13 @@ class Game:
         agent.learn(self.prev_state, self.prev_action, reward, next_state)
 
     def update(self):
+        """
+        Обновление состояния игры:
+            - если игра завершена, выход из метода
+            - увеличение таймера
+            - при достижении интервала создаётся новый блок (если не достигнут максимум)
+            - проверка положения блоков на выход за нижнюю границу экрана
+        """
         if self.finished:
             return
 
@@ -65,6 +107,19 @@ class Game:
                 break
 
     def is_invalid(self, block):
+        """
+        Проверка валидности положения блока:
+            - если блоков нет, всегда валидно
+            - вычисляется минимальная и максимальная координата X среди блоков
+            - если новый блок слишком далеко по X от существующих (более 3 BLOCK_SIZE), позиция считается невалидной
+            - если блок опустился ниже нижней границы экрана, позиция невалидна
+
+        Аргументы:
+            block (pymunk.Body): проверяемый блок
+
+        Возвращает:
+            bool: True, если позиция невалидна, иначе False
+        """
         if not self.blocks:
             return False
         xs = [b.position.x for b in self.blocks]
@@ -75,40 +130,37 @@ class Game:
             return True
         return y > HEIGHT
 
-    # TODO усложним награду
     def get_reward(self):
+        """
+        Вычисление награды для агента (TODO: усложнить формулу награды):
+            - если блоков нет или последний блок невалиден, возвращается штраф -10
+            - иначе награда рассчитывается на основе высот блоков:
+                + увеличивается, если соседний столбец ниже текущего
+                - уменьшается, если соседний столбец выше или равен текущему
+
+        Возвращает:
+            float: вычисленная награда
+        """
         if not self.blocks or self.is_invalid(self.blocks[-1]):
             return -10
 
-        ys = [b.position.y for b in self.blocks]
-        xs = [b.position.x for b in self.blocks]
-        cx = sum(xs) / len(xs)
-        left_x = min(xs)
-        right_x = max(xs)
-        height = (HEIGHT - min(ys)) // 10
-        reward = height // 5
-        if right_x == left_x:
-            pyramid_score = 0
-        else:
-            pyramid_score = ((cx - left_x) / ((right_x - left_x) / 2))
-        #print(height // 5, pyramid_score * 25)
-        reward += pyramid_score * len(self.blocks)
-        #h = agent.get_state(self.blocks)
-        #max_ind, max_val = max(enumerate(h), key=lambda x: x[1])
-        #i = max_ind
-        #while i > 0:
-        #    if h[i-1] <= h[i]:
-        #        reward += h[i]
-        #    else:
-        #        reward -= h[i]
-        #    i -= 1
-        #i = max_ind
-        #while i > len(h):
-        #    if h[i+1] <= h[i]:
-        #        reward += h[i]
-        #    else:
-        #        reward -= h[i]
-        #    i += 1
+        reward = 0
+        h = agent.get_state(self.blocks)
+        max_ind, max_val = max(enumerate(h), key=lambda x: x[1])
+        i = max_ind
+        while i > 0:
+            if h[i-1] < h[i]:
+                reward += h[i]
+            else:
+                reward -= h[i]
+            i -= 1
+        i = max_ind
+        while i > len(h):
+            if h[i+1] < h[i]:
+                reward += h[i]
+            else:
+                reward -= h[i]
+            i += 1
 
         #print(reward)
         return reward
