@@ -142,9 +142,11 @@ class Game:
             float: вычисленная награда
         """
         if not self.blocks or self.is_invalid(self.blocks[-1]):
-            return -10
+            return -15
 
         reward = 0
+
+        is_symmetry = True
         h = agent.get_state(self.blocks)
         max_ind, max_val = max(enumerate(h), key=lambda x: x[1])
         i = max_ind
@@ -152,6 +154,7 @@ class Game:
             if h[i-1] < h[i]:
                 reward += h[i]
             else:
+                is_symmetry = False
                 reward -= h[i]
             i -= 1
         i = max_ind
@@ -159,8 +162,11 @@ class Game:
             if h[i+1] < h[i]:
                 reward += h[i]
             else:
+                is_symmetry = False
                 reward -= h[i]
             i += 1
 
+        if is_symmetry:
+            reward *= 10
         #print(reward)
         return reward
